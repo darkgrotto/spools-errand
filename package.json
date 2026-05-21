@@ -1,0 +1,24 @@
+{
+  "name": "spools-errand",
+  "version": "0.2.0",
+  "description": "Spool's Errand — local catalog backend and frontend for piano roll collection tracker",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "init-db": "node scripts/init-db.js",
+    "ingest": "node ingest/run-all.js",
+    "ingest:iammp": "node ingest/ingest-iammp.js",
+    "ingest:rprf": "node ingest/ingest-rprf.js",
+    "stats": "node scripts/stats.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.10.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.0",
+    "pdf-parse": "^1.1.1",
+    "yauzl": "^3.1.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

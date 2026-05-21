@@ -1,0 +1,15 @@
+{
+  "server": {
+    "port": 7843,
+    "host": "127.0.0.1",
+    "https": true,
+    "cert": "./certs/server.crt",
+    "key": "./certs/server.key"
+  },
+  "database": {
+    "path": "./data/catalog.db"
+  },
+  "sources": {
+    "directory": "./data/sources"
+  }
+}

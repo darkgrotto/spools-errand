@@ -1,0 +1,11 @@
+node_modules/
+data/catalog.db
+data/catalog.db-journal
+data/catalog.db-shm
+data/catalog.db-wal
+data/sources/
+certs/server.key
+*.log
+.env
+.DS_Store
+Thumbs.db
