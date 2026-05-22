@@ -38,6 +38,5 @@ There is no test suite.
 
 ## Config & runtime gotchas
 
-- `config.json` controls port (default 7843), host (`127.0.0.1`), and HTTPS toggle. HTTPS uses a self-signed cert in `certs/`. The one-off scripts `add-https.sh`, `fix-cert.sh` regenerate the cert and (on macOS) install it into the System keychain — these are bootstrap helpers, not part of the normal dev loop.
+- `config.json` controls port (default 7843), host (`127.0.0.1`), and HTTPS toggle. HTTPS uses a self-signed cert in `certs/`. Both `certs/server.key` and `certs/server.crt` are gitignored; `start.sh` auto-generates the pair on first run using the tracked `certs/openssl.cnf` if either file is missing. `add-https.sh` is the force-regenerate helper (safe to re-run; prompts before overwriting). On macOS, the printed `security add-trusted-cert` command installs it into the System keychain.
 - `data/sources/`, `data/catalog.db*`, and `node_modules/` are gitignored. Source PDFs/ZIPs are not in the repo; see `README.md` for download URLs.
-- `patch.sh`, `patch2.sh`, `migrate-to-local.sh` are historical one-off migration scripts (they overwrite files with heredocs). Don't run them; treat as archived.

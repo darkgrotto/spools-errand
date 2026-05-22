@@ -2,144 +2,65 @@
 set -e
 cd "$(dirname "$0")"
 
-echo "=== Adding HTTPS support to backend ==="
+# Regenerate the self-signed HTTPS cert/key pair used by the local server.
+#
+# Normally you don't need to run this — start.sh auto-generates the pair on
+# first run if HTTPS is enabled in config.json and the files are missing.
+# Use this script when you want to force-regenerate (e.g. expired cert,
+# changed SANs, or you want a new key).
+#
+# Earlier versions of this script also rewrote config.json and src/server.js
+# from inline heredocs; that was destructive and clobbered later edits, so
+# those steps have been removed. HTTPS wiring now lives directly in
+# src/server.js and config.json — edit them there.
+
+echo "=== Regenerating HTTPS cert for Spool's Errand ==="
 echo
 
-# Step 1: Generate self-signed cert for 127.0.0.1 and localhost
-mkdir -p certs
-if [ ! -f certs/server.key ]; then
-    echo "Generating self-signed certificate for 127.0.0.1..."
-    cat > certs/openssl.cnf <<'CERTCONF'
-[req]
-distinguished_name = req_distinguished_name
-x509_extensions = v3_req
-prompt = no
-
-[req_distinguished_name]
-C = US
-ST = Pennsylvania
-L = Local
-O = Spool's Errand
-CN = 127.0.0.1
-
-[v3_req]
-keyUsage = keyEncipherment, dataEncipherment
-extendedKeyUsage = serverAuth
-subjectAltName = @alt_names
-
-[alt_names]
-DNS.1 = localhost
-IP.1 = 127.0.0.1
-IP.2 = ::1
-CERTCONF
-
-    openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
-        -keyout certs/server.key \
-        -out certs/server.crt \
-        -config certs/openssl.cnf \
-        -extensions v3_req
-    echo "  Certificate created at certs/server.crt"
-else
-    echo "Certificate already exists, skipping generation."
+if ! command -v openssl >/dev/null 2>&1; then
+    echo "Error: openssl not found in PATH." >&2
+    exit 1
 fi
 
-# Step 2: Update config.json to include HTTPS settings
-echo
-echo "Updating config.json..."
-cat > config.json <<'CONFIG'
-{
-  "server": {
-    "port": 7843,
-    "host": "127.0.0.1",
-    "https": true,
-    "cert": "./certs/server.crt",
-    "key": "./certs/server.key"
-  },
-  "database": {
-    "path": "./data/catalog.db"
-  },
-  "sources": {
-    "directory": "./data/sources"
-  }
-}
-CONFIG
+mkdir -p certs
 
-# Step 3: Update src/server.js to support HTTPS
-echo "Updating src/server.js..."
-cat > src/server.js <<'SERVER'
-const express = require('express');
-const cors = require('cors');
-const fs = require('fs');
-const path = require('path');
-const http = require('http');
-const https = require('https');
-const config = require('../config.json');
-const { db, initSchema } = require('./db');
-const searchRoutes = require('./routes/search');
-const lookupRoutes = require('./routes/lookup');
-const metaRoutes = require('./routes/meta');
+if [ ! -f certs/openssl.cnf ]; then
+    echo "Error: certs/openssl.cnf is missing (expected to be tracked in the repo)." >&2
+    exit 1
+fi
 
-initSchema();
+# Read cert/key paths from config.json so this stays in sync if they're moved.
+cert_path="$(node -p "require('./config.json').server.cert" 2>/dev/null || echo "./certs/server.crt")"
+key_path="$(node -p "require('./config.json').server.key" 2>/dev/null || echo "./certs/server.key")"
 
-const app = express();
-app.use(cors());
-app.use(express.json());
+if [ -f "$key_path" ] || [ -f "$cert_path" ]; then
+    echo "Existing cert/key found:"
+    [ -f "$cert_path" ] && echo "  $cert_path"
+    [ -f "$key_path" ] && echo "  $key_path"
+    read -r -p "Overwrite? [y/N] " reply
+    case "$reply" in
+        y|Y|yes|YES) ;;
+        *) echo "Aborted."; exit 0 ;;
+    esac
+fi
 
-app.get('/api/health', (req, res) => {
-  const row = db.prepare('SELECT COUNT(*) as count FROM rolls').get();
-  res.json({ status: 'ok', rollCount: row.count });
-});
+mkdir -p "$(dirname "$key_path")" "$(dirname "$cert_path")"
 
-app.use('/api', searchRoutes);
-app.use('/api', lookupRoutes);
-app.use('/api', metaRoutes);
-
-app.use((err, req, res, next) => {
-  console.error(err);
-  res.status(500).json({ error: err.message });
-});
-
-const port = config.server.port;
-const host = config.server.host;
-const useHttps = config.server.https === true;
-
-const row = db.prepare('SELECT COUNT(*) as count FROM rolls').get();
-
-if (useHttps) {
-  const cert = fs.readFileSync(path.resolve(__dirname, '..', config.server.cert));
-  const key = fs.readFileSync(path.resolve(__dirname, '..', config.server.key));
-  https.createServer({ cert, key }, app).listen(port, host, () => {
-    console.log(`Spool's Errand API listening on https://${host}:${port}`);
-    console.log(`Catalog contains ${row.count} rolls`);
-  });
-} else {
-  http.createServer(app).listen(port, host, () => {
-    console.log(`Spool's Errand API listening on http://${host}:${port}`);
-    console.log(`Catalog contains ${row.count} rolls`);
-  });
-}
-SERVER
+openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
+    -keyout "$key_path" \
+    -out "$cert_path" \
+    -config certs/openssl.cnf \
+    -extensions v3_req
 
 echo
-echo "=== HTTPS setup complete ==="
+echo "Wrote $key_path and $cert_path"
 echo
 echo "NEXT STEPS:"
 echo
-echo "1. Trust the certificate in macOS Keychain (one-time):"
-echo "   sudo security add-trusted-cert -d -r trustRoot \\"
-echo "     -k /Library/Keychains/System.keychain certs/server.crt"
+echo "1. (macOS only, one-time) Trust the certificate in the System keychain:"
+echo "     sudo security add-trusted-cert -d -r trustRoot \\"
+echo "       -k /Library/Keychains/System.keychain $cert_path"
 echo
-echo "   You'll be prompted for your Mac password."
-echo
-echo "2. Restart the server:"
-echo "   ./start.sh"
-echo
-echo "3. Test in a browser tab:"
-echo "   open https://127.0.0.1:7843/api/health"
-echo "   (Should now show as secure with no warning)"
-echo
-echo "4. In the artifact Settings, change backend URL to:"
-echo "   https://127.0.0.1:7843"
-echo
-echo "5. Click Test - should connect."
+echo "2. Start the server:"
+echo "     ./start.sh"
 echo

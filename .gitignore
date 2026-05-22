@@ -5,6 +5,7 @@ data/catalog.db-shm
 data/catalog.db-wal
 data/sources/
 certs/server.key
+certs/server.crt
 *.log
 .env
 .DS_Store
