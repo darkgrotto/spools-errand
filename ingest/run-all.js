@@ -10,19 +10,23 @@ if (!fs.existsSync(sourcesDir)) {
   process.exit(1);
 }
 
-console.log('Step 1: Ingesting IAMMP metadata...');
-try {
-  require('./ingest-iammp').run();
-} catch (err) {
-  console.error('IAMMP ingestion failed:', err.message);
-}
+const steps = [
+  ['IAMMP metadata', './ingest-iammp'],
+  ['RPRF PDFs',      './ingest-rprf'],
+  ['QRS catalog PDF', './ingest-qrs'],
+];
 
-console.log('\nStep 2: Ingesting RPRF PDFs...');
-try {
-  require('./ingest-rprf').run();
-} catch (err) {
-  console.error('RPRF ingestion failed:', err.message);
-}
-
-console.log('\n=== Ingestion complete ===');
-console.log('Run `npm run stats` to see catalog statistics.');
+(async () => {
+  for (let i = 0; i < steps.length; i++) {
+    const [label, mod] = steps[i];
+    console.log(`Step ${i + 1}: Ingesting ${label}...`);
+    try {
+      await require(mod).run();
+    } catch (err) {
+      console.error(`  ${label} ingestion failed: ${err.message}`);
+    }
+    console.log();
+  }
+  console.log('=== Ingestion complete ===');
+  console.log('Run `npm run stats` to see catalog statistics.');
+})();

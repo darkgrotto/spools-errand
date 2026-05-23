@@ -61,6 +61,7 @@ missing):
 | `ampico_catalog.pdf`          | RPRF Ampico catalog                                                 |
 | `duoart_catalog.pdf`          | RPRF Duo-Art catalog                                                |
 | `welte_catalog.pdf`           | RPRF Welte-Mignon catalog                                           |
+| `qrs_catalog.pdf`             | QRS Music product catalog (includes "Resurrected" Duo-Art/Ampico/Welte reissues) |
 | `midi-files_*.zip`            | IAMMP archive ZIPs (Stahnke/Keystone/Trachtman/etc.)                |
 
 Browse the IAMMP archive at
@@ -69,10 +70,11 @@ Browse the IAMMP archive at
 ### 2. Run ingestion
 
 ```bash
-./ingest.sh           # both pipelines
+./ingest.sh           # all pipelines
 # or one at a time:
 npm run ingest:iammp
 npm run ingest:rprf
+npm run ingest:qrs
 ```
 
 Ingestion is idempotent — rows are deduped on `(manufacturer, roll_number,
@@ -231,11 +233,13 @@ CLI args win over environment variables, which win over `config.json`.
 ### Regenerating the self-signed cert
 
 ```bash
-./fix-cert.sh              # regenerate cert in certs/
-./add-https.sh             # macOS only: trust the cert in the System keychain
+./add-https.sh             # force-regenerate cert + key in certs/
 ```
 
-These are bootstrap helpers — you shouldn't need them after the first run.
+`start.sh` auto-generates the cert pair on first run if either file is
+missing, so you don't normally need to run this. On macOS, the printed
+`security add-trusted-cert` command installs it into the System keychain
+to silence browser warnings.
 
 ---
 
@@ -252,11 +256,13 @@ src/
 
 ingest/
   ingest-iammp.js        # walks data/sources/midi-files_*.zip
-  ingest-rprf.js         # reads data/sources/*.pdf
-  run-all.js             # both pipelines (called by ingest.sh)
+  ingest-rprf.js         # reads data/sources/{ampico,duoart,welte}_catalog.pdf
+  ingest-qrs.js          # reads data/sources/qrs_catalog.pdf
+  run-all.js             # all pipelines (called by ingest.sh)
   parsers/
     iammp-meta.js        # parses .txt filenames + event content
-    rprf-pdf.js          # heuristic line parser for catalog PDFs
+    rprf-pdf.js          # heuristic line parser for RPRF catalog PDFs
+    qrs-pdf.js           # section-aware parser for the QRS catalog
 
 scripts/
   init-db.js             # create schema (idempotent)
@@ -314,6 +320,7 @@ the same app; prefer `app-source.js`.
 | `./ingest.sh`                                 | Run both ingestion pipelines.                                               |
 | `npm run ingest:iammp`                        | IAMMP ZIPs only.                                                            |
 | `npm run ingest:rprf`                         | RPRF PDFs only.                                                             |
+| `npm run ingest:qrs`                          | QRS catalog PDF only.                                                       |
 | `npm run init-db`                             | Create schema (safe to re-run).                                             |
 | `npm run stats`                               | Print catalog counts by source / mfg / type.                                |
 | `node scripts/clean-and-reingest.js`          | Delete RPRF rows and IAMMP `NonPDfiles/*` rows before a re-ingest.          |

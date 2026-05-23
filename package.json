@@ -9,6 +9,7 @@
     "ingest": "node ingest/run-all.js",
     "ingest:iammp": "node ingest/ingest-iammp.js",
     "ingest:rprf": "node ingest/ingest-rprf.js",
+    "ingest:qrs": "node ingest/ingest-qrs.js",
     "stats": "node scripts/stats.js"
   },
   "dependencies": {
