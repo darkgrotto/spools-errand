@@ -3,7 +3,11 @@ data/catalog.db
 data/catalog.db-journal
 data/catalog.db-shm
 data/catalog.db-wal
-data/sources/
+
+# Track catalog PDFs in data/sources/ but not the IAMMP MIDI archives
+# (the ZIPs are large and freely re-downloadable from archive.org).
+data/sources/*
+!data/sources/*.pdf
 certs/server.key
 certs/server.crt
 *.log

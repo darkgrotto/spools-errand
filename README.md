@@ -360,11 +360,43 @@ re-ingest from scratch.
 
 ---
 
-## Attribution
+## Attribution & sources
 
-Built on publicly available community resources:
+Spool's Errand is a non-commercial cataloging aid for piano-roll collectors.
+It does not reproduce the rolls themselves — only the bibliographic metadata
+(roll number, title, composer, performer, year) needed to identify them.
 
-- IAMMP — International Association of Mechanical Music Preservationists
-- RPRF — Reproducing Piano Roll Foundation (catalogs derived from
-  rollographies by Elaine Obenchain, Charles Davis Smith, and Richard Howe)
-- Stanford University Condon Collection
+The four catalog PDFs that ship in `data/sources/` are included here so the
+ingest pipeline is reproducible from a clean clone. They were obtained from
+the following sources:
+
+- **`ampico_catalog.pdf`**, **`duoart_catalog.pdf`**, **`welte_catalog.pdf`** —
+  Reproducing Piano Roll Foundation (RPRF) <https://rprf.org/>. The RPRF
+  catalogs are themselves derived from the published rollographies of
+  Elaine Obenchain (*The Complete Catalog of Ampico Reproducing Piano
+  Rolls*), Charles Davis Smith (*Duo-Art Piano Music: A Classified Catalog
+  of Recorded Rolls*), and Richard J. Howe (Welte-Mignon rollography).
+- **`qrs_catalog.pdf`** — QRS Music Technologies, Inc. <https://qrsmusic.com/>.
+  Current product catalog, which also documents the "Resurrected" Duo-Art,
+  Ampico, and Welte reissues QRS produces from restored master rolls.
+
+The IAMMP ZIP archives (`midi-files_*.zip`, `other-files_*.zip`) are **not**
+included in the repository — they are large and freely downloadable from the
+International Association of Mechanical Music Preservationists' mirror on the
+Internet Archive: <https://archive.org/details/pianorollmusic.com-midifiles>.
+Credit for the MIDI scans goes to the named contributors in each ZIP
+(Stahnke, Keystone, Trachtman, Cullen, Dyer, Jose, Swanson, Perry, Smythe,
+and others).
+
+Additional bibliographic grounding came from the Stanford University Condon
+Collection of player-piano rolls.
+
+### Takedown requests
+
+If you are a rights-holder (RPRF, QRS, an IAMMP contributor, an author of one
+of the source rollographies, or anyone else with a legitimate claim to
+content stored in this repository) and you would like material removed,
+please open an issue or email the maintainer listed in `package.json`.
+**Takedown requests will be honored** — the goal of this project is to help
+collectors find and identify rolls, not to redistribute anyone's work
+without consent.
